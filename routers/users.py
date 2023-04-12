@@ -1,9 +1,10 @@
 from fastapi.routing import APIRouter
-from fastapi import HTTPException
+from fastapi import HTTPException, Depends
 from core.schemas.users import UserCreate, UserLogin, UserOut
 from core.crud import users as users_crud
 from core.logics.users import hash_password, authenticate
-from core.logics.users import encode_id, decode_id
+from core.logics.users import encode_id
+from core.auth import auth
 
 
 router = APIRouter()
@@ -33,3 +34,7 @@ async def login(user: UserLogin):
     return {'username': user.username,
             'token': encode_id(user.id)}
 
+
+@router.post('/is-auth/', status_code=200)
+async def is_auth(user_id: int = Depends(auth)):
+    return user_id
