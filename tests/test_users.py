@@ -5,15 +5,20 @@ client = TestClient(app)
 
 username = 'Bob'
 password = '12345678'
+token = 'token'
 
 
 def test_create_user():
+    global token
+
     url = '/users/sign-up/'
     data = {'username': username, 'password': password}
     result = client.post(url,
                          json=data)
 
     assert result.status_code == 200
+    token = result.json()['token']
+
     assert client.post(url, json=data).status_code == 401, 'username is already taken'
 
     # bad request
@@ -43,3 +48,23 @@ def test_login_user():
     # bad request
     data = {'name': 'ddf', 'pass': 'dfdf'}
     assert client.post(url, json=data).status_code == 422
+
+
+def test_auth():
+    url = '/users/is-auth/'
+
+    # ok
+    result = client.post(url, headers={'Authorization': f'Token {token}'})
+    assert result.status_code == 200
+
+    # invalid auth header
+    result = client.post(url, headers={'Authorization': token})
+    assert result.status_code == 401
+
+    # auth header is empty
+    result = client.post(url)
+    assert result.status_code == 401
+
+    # auth token is invalid
+    result = client.post(url, headers={'Authorization': 'Token djfladsf'})
+    assert result.status_code == 401
