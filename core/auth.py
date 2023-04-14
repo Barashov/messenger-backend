@@ -21,7 +21,7 @@ async def auth(request: Request):
     token = auth_header[1]
 
     try:
-        return decode_id(token)
+        return decode_id(token)['id']
     except InvalidTokenError:
         raise HTTPException(status_code=401,
                             detail='invalid token')

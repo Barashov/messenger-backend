@@ -6,5 +6,6 @@ venv
 __pycache__
 
 sql_app.db
+media/chat_images/*
 
 /core/.env
