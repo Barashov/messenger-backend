@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Request, Depends, Form
+from fastapi import APIRouter, Request, Depends, Form, HTTPException
 
-from core.crud.chats import create_chat
+from core.crud.chats import create_chat, add_user_to_chat, is_user_in_chat
 from core.logics.images import save_image
 from core.auth import auth
 from core.schemas.chats import ChatCreateOut
@@ -25,6 +25,22 @@ async def create(request: Request,
     chat = await create_chat(name,
                              user_id,
                              image_path)
+
+    await add_user_to_chat(chat, user_id)
+
     return {'id': chat,
             'name': name,
             'image': image_path}
+
+
+@router.get('/{chat_id}/add-user/{adding_user_id}/', status_code=200)
+async def add_user(chat_id: int,
+                   adding_user_id: int,
+                   user_id: int = Depends(auth)):
+    user_in_chat = await is_user_in_chat(chat_id, user_id)
+    if not user_in_chat:
+        raise HTTPException(status_code=403, detail='user not in chat')
+
+    await add_user_to_chat(chat_id, adding_user_id)
+    return 'ok'
+

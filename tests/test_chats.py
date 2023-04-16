@@ -29,3 +29,35 @@ def test_create_chat():
     assert result.status_code == 422
 
 
+def test_add_user_to_chat():
+    # /chats/{chat_id}/add-user/{user_id}/ get request
+    chat_admin = client.post('/users/sign-up/',
+                             json={'username': 'chat-admin',
+                                   'password': '1234'}).json()
+    admin_auth = {'Authorization': f'Token {chat_admin["token"]}'}
+    chat = client.post('/chats/create/',
+                       data={'name': 'new_chat'},
+                       headers={'Authorization': f'Token {chat_admin["token"]}'}).json()
+    chat_id = chat['id']
+
+    user_1 = client.post('/users/sign-up/',
+                         json={'username': 'user_1',
+                               'password': '1234'}).json()
+    user_2 = client.post('/users/sign-up/',
+                         json={'username': 'user_2',
+                               'password': '1234'}).json()
+    user_1_id = user_1['id']
+    user_2_id = user_2['id']
+
+    # ok
+    result = client.get(f'/chats/{chat_id}/add-user/{user_1_id}/', headers=admin_auth)
+    assert result.status_code == 200
+
+    # user can't add another user to chat (user not in chat)
+    user_2_auth = {'Authorization': f'Token {user_2["token"]}'}
+    result = client.get(f'/chats/{chat_id}/add-user/{user_2_id}/', headers=user_2_auth)
+    assert result.status_code == 403
+
+
+
+
