@@ -29,7 +29,13 @@ def test_create_chat():
     assert result.status_code == 422
 
 
+user_1_id = None
+chat_id = None
+user_2_auth = None  # user not in chat
+
+
 def test_add_user_to_chat():
+    global user_1_id, chat_id, user_2_auth
     # /chats/{chat_id}/add-user/{user_id}/ get request
     chat_admin = client.post('/users/sign-up/',
                              json={'username': 'chat-admin',
@@ -59,5 +65,18 @@ def test_add_user_to_chat():
     assert result.status_code == 403
 
 
+def test_list_of_chat_users():
+    # /chats/{chat_id}/users/
+    chat_admin = client.post('/users/login/', json={'name': 'chat-admin',
+                                                    'password': '1234'}).json()
 
+    chat_admin_auth = {'Authorization': f'Token {chat_admin["token"]}'}
+
+    result = client.get(f'/chats/{chat_id}/users/', headers=chat_admin_auth)
+    assert result.status_code == 200
+    assert len(result.json()) == 2
+
+    #  user not in chat
+    result = client.get(f'/chats/{chat_id}/users/', headers=user_2_auth)
+    assert result.status_code == 403
 

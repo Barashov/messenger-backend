@@ -1,6 +1,7 @@
-from sqlalchemy import and_
+from sqlalchemy import and_, select
 from core.database import database
 from core.models.chats import chats, chat_users
+from core.models.users import users
 
 
 async def create_chat(name: str,
@@ -23,3 +24,10 @@ async def is_user_in_chat(chat_id, user_id):
     query = chat_users.select().where(and_(chat_users.c.chat_id == chat_id,
                                            chat_users.c.user_id == user_id))
     return await database.fetch_one(query)
+
+
+async def get_list_of_chat_users(chat_id):
+    select_fields = [users.c.id,
+                     users.c.username]
+    query = select(select_fields).join(chat_users).where(chat_users.c.chat_id == chat_id)
+    return await database.fetch_all(query)
