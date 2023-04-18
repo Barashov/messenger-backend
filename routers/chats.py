@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Request, Depends, Form, HTTPException
 
-from core.crud.chats import create_chat, add_user_to_chat, is_user_in_chat
+from core.crud.chats import create_chat, add_user_to_chat, is_user_in_chat, delete_user_from_chat
 from core.crud.chats import get_list_of_chat_users
 from core.logics.images import save_image
+from core.logics.chats import is_user_chat_creator
 from core.auth import auth
 from core.schemas.chats import ChatCreateOut
 from core.schemas.users import UserInfo
@@ -58,3 +59,18 @@ async def users_of_chat(chat_id,
 
     users = await get_list_of_chat_users(chat_id)
     return users
+
+
+@router.delete('/{chat_id}/delete-user/{user_id}/', status_code=200)
+async def delete_user(chat_id: int,
+                      user_id: int,
+                      chat_creator_id: int = Depends(auth)):
+    if user_id == chat_creator_id:
+        raise HTTPException(status_code=403,
+                            detail="chat creator can't delete himself")
+    user_creator = await is_user_chat_creator(chat_id, chat_creator_id)
+    if user_creator:
+        await delete_user_from_chat(chat_id, user_id)
+        return 200
+
+    raise HTTPException(status_code=403, detail='user is not chat creator')

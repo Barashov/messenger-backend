@@ -29,13 +29,12 @@ def test_create_chat():
     assert result.status_code == 422
 
 
-user_1_id = None
 chat_id = None
-user_2_auth = None  # user not in chat
+user_2_auth = None
 
 
 def test_add_user_to_chat():
-    global user_1_id, chat_id, user_2_auth
+    global chat_id, user_2_auth
     # /chats/{chat_id}/add-user/{user_id}/ get request
     chat_admin = client.post('/users/sign-up/',
                              json={'username': 'chat-admin',
@@ -78,5 +77,48 @@ def test_list_of_chat_users():
 
     #  user not in chat
     result = client.get(f'/chats/{chat_id}/users/', headers=user_2_auth)
+    assert result.status_code == 403
+
+
+def test_delete_users_from_chat():
+    #  /chats/{chat_id}/delete-user/{user_id}/
+    chat_admin = client.post('/users/login/', json={'name': 'chat-admin',
+                                                    'password': '1234'}).json()
+    chat_admin_auth = {'Authorization': f'Token {chat_admin["token"]}'}
+    chat_admin_id = chat_admin['id']
+
+    # user_1 in chat
+    user_1 = client.post('/users/login/', json={'name': 'user_1',
+                                                'password': '1234'}).json()
+    user_1_id = user_1['id']
+    user_1_auth = {'Authorization': f'Token {user_1["token"]}'}
+
+    # user_2 not in chat
+    user_2 = client.post('/users/login/', json={'name': 'user_2',
+                                                'password': '1234'}).json()
+    user_2_id = user_2['id']
+    user_2_auth = {'Authorization': f'Token {user_2["token"]}'}
+
+    #  user_1 delete admin
+    result = client.delete(f'/chats/2/delete-user/{chat_admin_id}/', headers=user_1_auth)
+    assert result.status_code == 403
+
+    # user_2 delete admin
+    result = client.delete(f'/chats/2/delete-user/{chat_admin_id}/', headers=user_2_auth)
+    assert result.status_code == 403
+
+    # admin delete user_2 (user_2 not in chat)
+    result = client.delete(f'/chats/2/delete-user/{user_2_id}/', headers=chat_admin_auth)
+    assert result.status_code == 200
+
+    # admin delete user_1
+    result = client.delete(f'/chats/2/delete-user/{user_1_id}/', headers=chat_admin_auth)
+    assert result.status_code == 200
+
+    result = client.get('/chats/2/users/', headers=chat_admin_auth).json()
+    assert len(result) == 1
+
+    # admin delete admin
+    result = client.delete(f'/chats/2/delete-user/{chat_admin_id}/', headers=chat_admin_auth)
     assert result.status_code == 403
 

@@ -31,3 +31,15 @@ async def get_list_of_chat_users(chat_id):
                      users.c.username]
     query = select(select_fields).join(chat_users).where(chat_users.c.chat_id == chat_id)
     return await database.fetch_all(query)
+
+
+async def get_chat_by_id(chat_id):
+
+    query = chats.select().where(chats.c.id == chat_id)
+    return await database.fetch_one(query)
+
+
+async def delete_user_from_chat(chat_id, user_id):
+    query = chat_users.delete().where(and_(chat_users.c.chat_id == chat_id,
+                                           chat_users.c.user_id == user_id))
+    await database.execute(query)
