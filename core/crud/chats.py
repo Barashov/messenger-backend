@@ -43,3 +43,8 @@ async def delete_user_from_chat(chat_id, user_id):
     query = chat_users.delete().where(and_(chat_users.c.chat_id == chat_id,
                                            chat_users.c.user_id == user_id))
     await database.execute(query)
+
+
+async def delete_chat(chat_id):
+    query = chats.delete().where(chats.c.id == chat_id)
+    await database.execute(query)

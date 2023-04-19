@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Request, Depends, Form, HTTPException
 
-from core.crud.chats import create_chat, add_user_to_chat, is_user_in_chat, delete_user_from_chat
+from core.crud.chats import create_chat, add_user_to_chat, is_user_in_chat
+from core.crud.chats import delete_chat, delete_user_from_chat
 from core.crud.chats import get_list_of_chat_users
 from core.logics.images import save_image
 from core.logics.chats import is_user_chat_creator
@@ -74,3 +75,20 @@ async def delete_user(chat_id: int,
         return 200
 
     raise HTTPException(status_code=403, detail='user is not chat creator')
+
+
+@router.post('/{chat_id}/exit/', status_code=200)
+async def exit_from_chat(chat_id: int,
+                         user_id: int = Depends(auth)):
+    await delete_user_from_chat(chat_id, user_id)
+    return 200
+
+
+@router.delete('/{chat_id}/delete/', status_code=200)
+async def delete(chat_id: int,
+                 user_id: int = Depends(auth)):
+    user_chat_creator = await is_user_chat_creator(chat_id, user_id)
+    if user_chat_creator:
+        await delete_chat(chat_id)
+        return 200
+    raise HTTPException(status_code=403)
