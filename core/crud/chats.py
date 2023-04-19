@@ -48,3 +48,12 @@ async def delete_user_from_chat(chat_id, user_id):
 async def delete_chat(chat_id):
     query = chats.delete().where(chats.c.id == chat_id)
     await database.execute(query)
+
+
+async def get_user_chats(user_id):
+    select_fields = [chats.c.id,
+                     chats.c.name,
+                     chats.c.created_by,
+                     chats.c.image]
+    query = select(select_fields).join(chat_users).where(chat_users.c.user_id == user_id)
+    return await database.fetch_all(query)

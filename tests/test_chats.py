@@ -174,5 +174,37 @@ def test_delete_chat():
     assert result.status_code == 200
 
 
+def create_chat(admin_chat_auth, count) -> list[int]:
+    """
+    create {count} chats
+    :return: list of id
+    """
+    id_list = []
+    for i in range(count):
+        chat = client.post('/chats/create/', data={'name': f'chat_{i}'}, headers=admin_chat_auth).json()
+        id_list.append(chat['id'])
+
+    return id_list
+
+
+def add_user_to_chats(id_list: list[int], user_id, admin_chat_auth):
+    for id in id_list:
+        result = client.get(f'/chats/{id}/add-user/{user_id}', headers=admin_chat_auth)
+        assert result.status_code == 200
+
+
 def test_user_chats_list():
-    pass
+    user_1 = client.post('/users/login/', json={'name': 'user_1',
+                                                'password': '1234'}).json()
+    user_1_auth = {'Authorization': f'Token {user_1["token"]}'}
+
+    admin_chat = client.post('/users/login/', json={'name': 'chat-admin',
+                                                    'password': '1234'}).json()
+    admin_chat_auth = {'Authorization': f'Token {admin_chat["token"]}'}
+
+    #  create chats and add user to chats
+    add_user_to_chats(create_chat(admin_chat_auth, 6), user_1['id'], admin_chat_auth)
+
+    result = client.get('/chats/', headers=user_1_auth)
+    assert result.status_code == 200
+    assert len(result.json()) == 6

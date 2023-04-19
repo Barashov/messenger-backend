@@ -2,11 +2,11 @@ from fastapi import APIRouter, Request, Depends, Form, HTTPException
 
 from core.crud.chats import create_chat, add_user_to_chat, is_user_in_chat
 from core.crud.chats import delete_chat, delete_user_from_chat
-from core.crud.chats import get_list_of_chat_users
+from core.crud.chats import get_list_of_chat_users, get_user_chats
 from core.logics.images import save_image
 from core.logics.chats import is_user_chat_creator
 from core.auth import auth
-from core.schemas.chats import ChatCreateOut
+from core.schemas.chats import ChatCreateOut, FullChat
 from core.schemas.users import UserInfo
 
 
@@ -92,3 +92,9 @@ async def delete(chat_id: int,
         await delete_chat(chat_id)
         return 200
     raise HTTPException(status_code=403)
+
+
+@router.get('/', status_code=200, response_model=list[FullChat])
+async def user_chats(user_id: int = Depends(auth)):
+    chats = await get_user_chats(user_id)
+    return chats
