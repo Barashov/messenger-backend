@@ -20,7 +20,8 @@ async def sign_up(user: UserCreate):
     hashed_password = hash_password(user.password)
     db_user_id = await users_crud.create_user(username=user.username,
                                               hashed_password=hashed_password)
-    return {'username': user.username,
+    return {'id': db_user_id,
+            'username': user.username,
             'token': encode_id(db_user_id)}
 
 
@@ -31,7 +32,8 @@ async def login(user: UserLogin):
     if user is None:
         raise HTTPException(status_code=401, detail='the name or password in incorrect')
 
-    return {'username': user.username,
+    return {'id': user.id,
+            'username': user.username,
             'token': encode_id(user.id)}
 
 
