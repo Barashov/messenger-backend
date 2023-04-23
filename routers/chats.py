@@ -8,9 +8,11 @@ from core.logics.chats import is_user_chat_creator
 from core.auth import auth
 from core.schemas.chats import ChatCreateOut, FullChat
 from core.schemas.users import UserInfo
-
+from routers.chat import router as chat_router
+from routers.chat import chat_manager
 
 router = APIRouter()
+router.include_router(chat_router)
 
 
 @router.post('/create/', status_code=201, response_model=ChatCreateOut)
@@ -72,6 +74,7 @@ async def delete_user(chat_id: int,
     user_creator = await is_user_chat_creator(chat_id, chat_creator_id)
     if user_creator:
         await delete_user_from_chat(chat_id, user_id)
+        chat_manager.disconnect(chat_id, user_id)
         return 200
 
     raise HTTPException(status_code=403, detail='user is not chat creator')
@@ -81,6 +84,7 @@ async def delete_user(chat_id: int,
 async def exit_from_chat(chat_id: int,
                          user_id: int = Depends(auth)):
     await delete_user_from_chat(chat_id, user_id)
+    chat_manager.disconnect(chat_id, user_id)
     return 200
 
 
