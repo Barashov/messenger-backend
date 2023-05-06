@@ -1,8 +1,8 @@
-from fastapi import APIRouter, WebSocket, status, WebSocketException, Depends, WebSocketDisconnect
+from fastapi import APIRouter, WebSocket, status, WebSocketException, Depends
 from core.crud.chats import is_user_in_chat
 from core.auth import websocket_auth
 from core.manager import ChatManager
-import asyncio
+from core.crud.messages import create_message
 """
 websocket manager, endpoint
 chat messages functional
@@ -26,8 +26,11 @@ async def chat_endpoint(websocket: WebSocket,
     chat_manager.connect(chat_id, user_id, websocket)
     try:
         while True:
-            await asyncio.sleep(1)
-            await websocket.send_text('hello')
+            message = await websocket.receive_json()
+            if not chat_manager.is_user_in_chat(chat_id, user_id):
+                raise WebSocketException(code=1000, reason='user not in chat')
+
+            #  save message
+            await chat_manager.send_message(chat_id, message)
     finally:
         chat_manager.disconnect(chat_id, user_id)
-
