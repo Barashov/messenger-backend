@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy import Table
-from datetime import datetime
+from sqlalchemy.sql import func
 from core.database import metadata
 
 
@@ -29,7 +29,7 @@ users = Table('users',
 
               Column('created_at',
                      DateTime,
-                     default=datetime.now()))
+                     default=func.now()))
 
 
 friends = Table('friends',
